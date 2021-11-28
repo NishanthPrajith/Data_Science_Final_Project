@@ -1,4 +1,6 @@
 # California Fire Detection
+\
+*Note : Please run the `exploratory_data_analysis.ipynb` notebook locally with the appropriate files (`California_Fire_Cleaned.csv` & `weather_data.csv`) to see the graphs and to understand the conclusions.*
 
 ### Group Members
 - Farah Sultana
