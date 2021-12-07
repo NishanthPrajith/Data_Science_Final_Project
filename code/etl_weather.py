@@ -40,7 +40,7 @@ len(new)
 
 def storeData(a, j):
   columnName_one = ['Temp Day', 'MaxTemp Day', 'MinTemp Day', "Humidity Day"] # Create a list of column names
-  columnName_two = ["One", "Two", "Three", "Four", "Five"] # List of the days
+  columnName_two = ["One", "Two", "Three", "Four", "Five"] # List of the day counts
   # The above is done like this to make it easier
 
   dataName = ["avgtempF", "maxtempF", "mintempF"] # JSON data name
@@ -53,6 +53,7 @@ def storeData(a, j):
     
     avg = 0.0
     b = a[i]['hourly']
+    
     # loop that calculates the average humidity for each day
     for g in range(0, 8):
       avg += float(b[g]['humidity'])

@@ -11,9 +11,9 @@ import pandas as pd
 import requests
 import datetime
 
-fires = pd.read_csv("../data/California_Fire_Cleaned.csv", index_col = 0)
+fires = pd.read_csv("../data/California_Fire_Cleaned.csv", index_col = 0) # Read the California Fire cleaned dataset
 
-weather = pd.read_csv("../data/weather_data.csv", index_col = 0)
+weather = pd.read_csv("../data/weather_data.csv", index_col = 0) # Read the Weather cleaned dataset
 
 fires.head(5)
 
@@ -25,19 +25,22 @@ weather.shape
 
 # We need to merge on the right as some of the places weather data does not exist or could not fetched so to ensure that the model works with good data we need to
 # merge right
-
 merged = pd.merge(left=fires, right=weather, how = 'right', left_on=['FIPS', 'Latitude', 'Longitude', 'Counties','Started'], right_on=['FIPS', 'Latitude', 'Longitude', 'Counties', 'Started'])
 merged.shape
 
+# Remove colums that are not needed for modeling
 drop_columns = ['Extinguished', 'Fatalities', 'CalFireIncident', 'Final', 'CountyIds', 'Injuries', 'Location', 'MajorIncident', 'PercentContained', 'Name', 'Status', 'Active Time', 'Featured', 'ArchiveYear', 'AdminUnit']
 
+# Drop the columns from mefore
 merged = merged.drop(drop_columns, axis = 1)
 
 merged.head(5)
 
-merged['Fire'] = True
+merged['Fire'] = True # Create a new column called 'Fire' which is true if fire occured else false
 
-def randomDate(i):
+
+# Time to add control data
+def randomDate(i): # selectes a random date that is before the start date but also does not exist already in the merged dataframe
   x = 365
   start = pd.to_datetime(merged['Started'][i])
   end = pd.to_datetime(merged['Started'][i])
@@ -47,19 +50,20 @@ def randomDate(i):
     a = pd.to_datetime(merged['Started'][i])
     start = a - days
     end = start + daysTwo
-    x += 30
+    x += 30 # increment by 30 days to make sure that the date to get a different date if the current date already exists
 
-    b = len(merged[(pd.to_datetime(merged['Started']) > a) & (merged['Counties'] == merged['Counties'][i]) & (pd.to_datetime(merged['Started']) < end)])
+    b = len(merged[(pd.to_datetime(merged['Started']) > a) & (merged['Counties'] == merged['Counties'][i]) & (pd.to_datetime(merged['Started']) < end)]) # Check if the date already exists
     
-    if (b == 0):
+    if (b == 0): # If length is 0 then break
       break
   return [start, end]
 
 def storeData(a):
-  columnName_one = ['Temp Day', 'MaxTemp Day', 'MinTemp Day', "Humidity Day"]
-  columnName_two = ["One", "Two", "Three", "Four", "Five"]
+  columnName_one = ['Temp Day', 'MaxTemp Day', 'MinTemp Day', "Humidity Day"] # Create a list of column names
+  columnName_two = ["One", "Two", "Three", "Four", "Five"] # List of the day counts
+  # The above is done like this to make it easier
 
-  dataName = ["avgtempF", "maxtempF", "mintempF"]
+  dataName = ["avgtempF", "maxtempF", "mintempF"] # JSON data name
 
   for i in range(0, 5):
     for k in range(0, 3):
@@ -69,6 +73,8 @@ def storeData(a):
     
     avg = 0.0
     b = a[i]['hourly']
+
+    # loop that calculates the average humidity for each day
     for g in range(0, 8):
       avg += float(b[g]['humidity'])
     avg = float(avg / 8)
@@ -81,23 +87,23 @@ def getweather(temp, i, start, end):
   c = {}
   lat = temp['Latitude']
   longi = temp['Longitude']
-  startDate = str(start)[0:10]
-  endDate = str(end)[0:10]
+  startDate = str(start)[0:10] # 5 days before the fire started
+  endDate = str(end)[0:10] # date the day before the fire started
 
   requestLink = "http://api.worldweatheronline.com/premium/v1/past-weather.ashx?key={key}&q={lat},{longi}&format=json&date={start}&enddate={end}".format(key = apiKEY, start = startDate, end = endDate, lat = lat, longi = longi)
 
-  data = requests.get(requestLink)
+  data = requests.get(requestLink) # API request
 
   c = data
   if (c.status_code == 200):
-    a = data.json()['data']['weather']
-    storeData(a)
+    a = data.json()['data']['weather'] # Get the API json weather data
+    storeData(a) # run the function to filter and store the data (a is the json data)
   return c
 
 v = len(merged)
 days = datetime.timedelta(365)
 for i in range(0, v):
-  temp = {}
+  temp = {} # Create a temporary dictionary to store the data
   temp['AcresBurned'] = 0
   temp['Counties'] = merged['Counties'][i]
   temp['Latitude'] = merged['Latitude'][i]
@@ -106,12 +112,12 @@ for i in range(0, v):
   s, e = randomDate(i)
   done = getweather(temp, i, s, e)
   temp['Started'] = s
-  temp['Fire'] = False
-  df = pd.DataFrame(temp, index = [v + i])
-  merged = merged.append(df)
+  temp['Fire'] = False # Set this as false as we are sure the fire did not occur becuase the date is not already in the dataset
+  df = pd.DataFrame(temp, index = [v + i]) # Create a dataframe with the temp dictionary
+  merged = merged.append(df) # Append the dataframe to the merged dataframe
 
 merged.tail(14)
 
 merged.head(10)
 
-merged.to_csv('cleaned.csv')
+merged.to_csv('../data/cleaned.csv') # Store the dataframe into a csv file
