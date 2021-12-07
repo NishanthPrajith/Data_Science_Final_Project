@@ -6,6 +6,18 @@
 - Farah Sultana
 - Nishanth Prajith
 
+### Running the Code
+First clone the repository and go to the project folder. Then,
+
+```bash
+cd code/
+python3 etl_california_fire.py
+python3 etl_weather.py
+python3 cleaning.py
+```
+
+To run `exploratory_data_analysis.ipynb` and`models.ipynb` open it in google colab or jupyter notebook running locally
+
 ### Repository Structure
 - `data`
   - `California_Fire_Incidents.csv`: Raw data from the kaggle for all fires in california from 2013 - 2019
